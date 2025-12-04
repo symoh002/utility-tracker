@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Utility Tracker</title>
+  <style>
+    *{box-sizing:border-box}body{font-family:'Segoe UI',Tahoma,sans-serif;margin:0;padding:0;background-color:#f5f7fa;color:#333}.navbar{background:#2c3e50;padding:12px 20px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}.navbar h1{color:#fff;margin:0;font-size:1.4rem;display:flex;align-items:center;gap:10px}.container{max-width:800px;margin:20px auto;padding:0 15px}.actions-bar{display:flex;gap:10px;margin:15px 0;flex-wrap:wrap}.btn{padding:8px 12px;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:.9rem;flex:1;min-width:100px;text-align:center}.btn-primary{background:#3498db;color:#fff}.btn-primary:hover{background:#2980b9}.btn-success{background:#2ecc71;color:#fff}.btn-success:hover{background:#27ae60}.btn-warning{background:#f39c12;color:#fff}.btn-warning:hover{background:#e67e22}.btn-danger{background:#e74c3c;color:#fff}.btn-danger:hover{background:#c0392b}.form-section,.summary-section,.search-section,.bills-section{background:#fff;padding:20px;border-radius:8px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}.form-section h2,.summary-section h2,.bills-section h2{margin-top:0;color:#2c3e50;font-size:1.2rem}.form-group{margin:12px 0}label{display:block;margin-bottom:5px;font-weight:700;color:#2c3e50}input,select{width:100%;padding:8px;border:1px solid #ccc;border-radius:4px}.search-box input{width:100%;padding:10px;font-size:16px;border:1px solid #ccc;border-radius:4px}.bill-card{background:#fff;border-left:4px solid #3498db;padding:15px;margin:15px 0;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1)}.paid{border-left-color:#2ecc71}.actions{margin-top:10px}.actions button{margin-right:8px;padding:5px 10px;font-size:.9em;border-radius:4px}.mark-paid{background-color:#2ecc71;color:#fff;border:none}.mark-paid:hover{background-color:#27ae60}.delete{background-color:#e74c3c;color:#fff;border:none}.delete:hover{background-color:#c0392b}.month-total{font-weight:700;margin:8px 0;color:#2c3e50}.no-results{text-align:center;color:#7f8c8d;font-style:italic;padding:20px}#duplicateModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:1000}.modal-content{background:#fff;margin:10% auto;padding:20px;width:90%;max-width:500px;border-radius:8px;text-align:center}.modal-buttons button{margin:10px;padding:8px 16px;border:none;border-radius:4px;font-weight:700}.cancel-btn{background-color:#95a5a6;color:#fff}.cancel-btn:hover{background-color:#7f8c8d}
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <h1>💧⚡ Utility Tracker</h1>
+  </nav>
+
+  <div class="container">
+    <div class="actions-bar">
+      <button class="btn btn-primary" onclick="toggleSection('form')">➕ Add Bill</button>
+      <button class="btn btn-success" onclick="toggleSection('bills')">📋 View Bills</button>
+      <button class="btn btn-warning" onclick="toggleSection('summary')">📊 Summary</button>
+      <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All</button>
+    </div>
+
+    <div class="form-section" id="formSection">
+      <h2>Add / Update Utility Bill</h2>
+      <div class="form-group">
+        <label>Tenant Name</label>
+        <input type="text" id="tenant" placeholder="e.g., John Smith">
+      </div>
+      <div class="form-group">
+        <label>Plot Number</label>
+        <input type="text" id="plot" placeholder="e.g., Plot 12">
+      </div>
+      <div class="form-group">
+        <label>House Number</label>
+        <input type="text" id="house" placeholder="e.g., House 5">
+      </div>
+      <div class="form-group">
+        <label>Unit / Apartment (optional)</label>
+        <input type="text" id="unit" placeholder="e.g., Unit 2B">
+      </div>
+      <div class="form-group">
+        <label>Utility Type</label>
+        <select id="type">
+          <option value="Electricity">Electricity</option>
+          <option value="Water">Water</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Account Number</label>
+        <input type="text" id="account" placeholder="e.g., ACC-12345">
+      </div>
+      <div class="form-group">
+        <label>Bill Date</label>
+        <input type="date" id="date">
+      </div>
+      <div class="form-group">
+        <label>Meter Reading</label>
+        <input type="number" id="reading" placeholder="e.g., 5432">
+      </div>
+      <div class="form-group">
+        <label>Amount Due (Ksh)</label>
+        <input type="number" id="amount" placeholder="e.g., 2500.50" step="0.01">
+      </div>
+      <div class="form-group">
+        <label>Due Date</label>
+        <input type="date" id="dueDate">
+      </div>
+      <button class="btn btn-primary" onclick="addBill()">✅ Save Bill</button>
+    </div>
+
+    <div class="summary-section" id="summarySection">
+      <h2>Monthly Totals</h2>
+      <div id="monthlySummary">Loading...</div>
+    </div>
+
+    <div class="search-section">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Search by account, plot, tenant, etc." oninput="filterBillsUI()">
+      </div>
+    </div>
+
+    <div class="bills-section" id="billsSection">
+      <h2>All Utility Bills</h2>
+      <div id="billsContainer">Loading bills...</div>
+    </div>
+
+    <div id="duplicateModal">
+      <div class="modal-content">
+        <h3>⚠️ Account Already Exists</h3>
+        <p id="duplicateMessage">This account number is already in use.</p>
+        <div class="modal-buttons">
+          <button class="btn btn-success" onclick="confirmUpdate(true)">🔁 Update Existing</button>
+          <button class="cancel-btn" onclick="confirmUpdate(false)">❌ Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Load bills from browser storage
+    let bills = JSON.parse(localStorage.getItem('utilityBills')) || [];
+    let pendingBill = null;
+    let isInitialized = false;
+
+    function saveBills() {
+      localStorage.setItem('utilityBills', JSON.stringify(bills));
+      renderMonthlySummary();
+      filterBillsUI();
+    }
+
+    function addBill() {
+      const tenant = document.getElementById('tenant').value.trim();
+      const plot = document.getElementById('plot').value.trim();
+      const house = document.getElementById('house').value.trim();
+      const unit = document.getElementById('unit').value.trim();
+      const type = document.getElementById('type').value;
+      const account = document.getElementById('account').value.trim();
+      const date = document.getElementById('date').value;
+      const reading = document.getElementById('reading').value;
+      const amount = document.getElementById('amount').value;
+      const dueDate = document.getElementById('dueDate').value;
+
+      if (!plot || !account || !date || !amount) {
+        alert('❗ Please fill: Plot, Account, Date, and Amount.');
+        return;
+      }
+
+      const existing = bills.find(b => b.account === account);
+      if (existing) {
+        document.getElementById('duplicateMessage').innerText =
+          `Account "${account}" already exists:\nPlot: ${existing.plot} | House: ${existing.house}\n\nUpdate with new data?`;
+        document.getElementById('duplicateModal').style.display = 'block';
+        pendingBill = {
+          id: existing.id,
+          tenant: tenant || '—',
+          plot: plot || '—',
+          house: house || '—',
+          unit: unit || '—',
+          type,
+          account,
+          date,
+          reading: reading || '—',
+          amount: parseFloat(amount),
+          dueDate: dueDate || '—',
+          paid: existing.paid,
+          paidDate: existing.paidDate
+        };
+        return;
+      }
+
+      bills.unshift({
+        id: Date.now(),
+        tenant: tenant || '—',
+        plot: plot || '—',
+        house: house || '—',
+        unit: unit || '—',
+        type,
+        account,
+        date,
+        reading: reading || '—',
+        amount: parseFloat(amount),
+        dueDate: dueDate || '—',
+        paid: false,
+        paidDate: null
+      });
+      saveBills();
+      clearForm();
+    }
+
+    function confirmUpdate(shouldUpdate) {
+      document.getElementById('duplicateModal').style.display = 'none';
+      if (shouldUpdate && pendingBill) {
+        const index = bills.findIndex(b => b.id === pendingBill.id);
+        if (index !== -1) bills[index] = pendingBill;
+        saveBills();
+        clearForm();
+      }
+      pendingBill = null;
+    }
+
+    function markPaid(id) {
+      const bill = bills.find(b => b.id === id);
+      if (bill) {
+        bill.paid = true;
+        bill.paidDate = new Date().toISOString().split('T')[0];
+        saveBills();
+      }
+    }
+
+    function deleteBill(id) {
+      if (confirm('Delete this bill permanently?')) {
+        bills = bills.filter(b => b.id !== id);
+        saveBills();
+      }
+    }
+
+    function clearAllData() {
+      if (confirm('⚠️ Delete ALL bills? This cannot be undone.')) {
+        bills = [];
+        saveBills();
+        clearForm();
+      }
+    }
+
+    function getMonthlyTotals() {
+      const totals = {};
+      bills.forEach(bill => {
+        if (!bill.date) return;
+        const key = bill.date.substring(0, 7);
+        totals[key] = (totals[key] || 0) + (bill.amount || 0);
+      });
+      return totals;
+    }
+
+    function renderMonthlySummary() {
+      const div = document.getElementById('monthlySummary');
+      const totals = getMonthlyTotals();
+      const months = Object.keys(totals).sort().reverse();
+
+      if (months.length === 0) {
+        div.innerHTML = '<p>No bills recorded yet.</p>';
+        return;
+      }
+
+      let html = '';
+      months.forEach(month => {
+        const d = new Date(month + '-01');
+        const name = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+        html += `<div class="month-total">• ${name}: <strong>Ksh ${totals[month].toFixed(2)}</strong></div>`;
+      });
+      div.innerHTML = html;
+    }
+
+    function filterBillsUI() {
+      const term = document.getElementById('searchInput').value.toLowerCase().trim();
+      const container = document.getElementById('billsContainer');
+
+      if (bills.length === 0) {
+        container.innerHTML = '<p>No bills recorded yet.</p>';
+        return;
+      }
+
+      const filtered = term
+        ? bills.filter(b =>
+            b.tenant.toLowerCase().includes(term) ||
+            b.plot.toLowerCase().includes(term) ||
+            b.house.toLowerCase().includes(term) ||
+            b.unit.toLowerCase().includes(term) ||
+            b.account.toLowerCase().includes(term) ||
+            b.type.toLowerCase().includes(term)
+          )
+        : bills;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="no-results">No matching bills found.</div>';
+        return;
+      }
+
+      let html = '';
+      filtered.forEach(bill => {
+        html += `
+          <div class="bill-card ${bill.paid ? 'paid' : ''}">
+            <div><strong>📍 Plot:</strong> ${bill.plot}</div>
+            <div><strong>🏠 House:</strong> ${bill.house}</div>
+            ${bill.unit !== '—' ? `<div><strong>🚪 Unit:</strong> ${bill.unit}</div>` : ''}
+            <div><strong>⚡ Utility:</strong> ${bill.type}</div>
+            <div><em>Tenant: ${bill.tenant}</em></div>
+            <div><small>Account: ${bill.account}</small></div>
+            <div>Bill Date: ${bill.date} | Due: ${bill.dueDate}</div>
+            <div>Reading: ${bill.reading} | Amount: Ksh ${bill.amount.toFixed(2)}</div>
+            ${bill.paid ? `<div><em>✅ Paid on ${bill.paidDate}</em></div>` : ''}
+            <div class="actions">
+              ${!bill.paid ? `<button class="mark-paid" onclick="markPaid(${bill.id})">Mark Paid</button>` : ''}
+              <button class="delete" onclick="deleteBill(${bill.id})">Delete</button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function clearForm() {
+      document.getElementById('tenant').value = '';
+      document.getElementById('plot').value = '';
+      document.getElementById('house').value = '';
+      document.getElementById('unit').value = '';
+      document.getElementById('account').value = '';
+      document.getElementById('reading').value = '';
+      document.getElementById('amount').value = '';
+      document.getElementById('dueDate').value = '';
+      document.getElementById('date').valueAsDate = new Date();
+    }
+
+    function toggleSection(section) {
+      document.getElementById(section + 'Section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Initialize app
+    window.onload = () => {
+      document.getElementById('date').valueAsDate = new Date();
+      filterBillsUI();
+      renderMonthlySummary();
+    };
+  </script>
+</body>
+</html>
